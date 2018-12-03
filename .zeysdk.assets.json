@@ -1,0 +1,12 @@
+{
+  "resources": {
+    "html": {
+      "mimetype": "application/ixml+xml",
+      "name": "HTML Boilerplate"
+    },
+    "xml": {
+      "mimetype": "application/ixml+xml",
+      "name": "XML Tools"
+    }
+  }
+}

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ixml SYSTEM "http://ixml.groupion.com/schema/ixml.dtd">
+<ixml>
+
+<class var="return.Boilerplate">
+	<!--
+		Creates an HTML page
+
+		@param {string} title*
+		@param {string} description
+		@param {array} includeCss
+		@param {array} includeJs
+		@param {array} css
+		@param {array} js
+		@param {array|string} content
+	-->
+	<constructor>
+		<is var="title">
+			<set var="this.page.title">$title</set>
+		</is>
+		<is var="description">
+			<set var="this.page.description">$description</set>
+		</is>
+		<is var="includeCss">
+			<assign var="this.page.includeCss" var_source="includeCss" />
+		</is>
+		<is var="includeJs">
+			<assign var="this.page.includeJs" var_source="includeJs" />
+		</is>
+		<is var="header">
+			<is var="css" type="array">
+				<assign var="this.page.header" var_source="header" />
+			<else>
+				<array:push var="this.page.header">$header</array:push>
+			</else>
+			</is>
+		</is>
+		<is var="css">
+			<is var="css" type="array">
+				<assign var="this.page.css" var_source="css" />
+			<else>
+				<array:push var="this.page.css">$css</array:push>
+			</else>
+			</is>
+		</is>
+		<is var="js">
+			<is var="js" type="array">
+				<assign var="this.page.js" var_source="js" />
+			<else>
+				<array:push var="this.page.js">$js</array:push>
+			</else>
+			</is>
+		</is>
+		<is var="content">
+			<typeof var="content" var_result="type" />
+			<if value1="$type" value2="array">
+				<assign var="this.page.content" var_source="content" />
+			<else>
+				<array:push var="this.page.content">$content</array:push>
+			</else>
+			</if>
+		</is>
+	</constructor>
+
+	<!--
+		Sets the page title
+
+		@param {int} return The viewport width
+	-->
+	<method name="setTitle">
+		<set var="this.page.title">$return</set>
+	</method>
+
+	<!--
+		Sets the page description
+
+		@param {int} return The viewport width
+	-->
+	<method name="setDescription">
+		<set var="this.page.description">$return</set>
+	</method>
+
+	<!--
+		Specifies the device viewport
+
+		@param {int} return The viewport width
+	-->
+	<method name="setViewport">
+		<array:push var="this.page.viewport">$return</array:push>
+	</method>
+
+	<!--
+		Specifies the device viewport
+
+		@param {string} return The favicon URL
+	-->
+	<method name="setFavicon">
+		<array:push var="this.page.favicon">$return</array:push>
+	</method>
+
+	<!--
+		Includes a CSS file URL
+
+		@param {string} return The CSS URL
+	-->
+	<method name="includeCss">
+		<array:push var="this.page.includeCss">$return</array:push>
+	</method>
+
+	<!--
+		Adds CSS code at the end of the header
+
+		@param {string} return CSS code
+	-->
+	<method name="addCss">
+		<array:push var="this.page.css">$return</array:push>
+	</method>
+
+	<!--
+		Adds a header section
+
+		@param {string} return CSS code
+	-->
+	<method name="addHeader">
+		<array:push var="this.page.header">$return</array:push>
+	</method>
+
+
+	<!--
+		Includes a JS file URL (placed at the end of the footer)
+
+		@param {string} return The CSS URL
+	-->
+	<method name="includeJs">
+		<array:push var="this.page.includeJs">$return</array:push>
+	</method>
+
+	<!--
+		Adds JS code at the end of the footer
+
+		@param {string} return JS code
+	-->
+	<method name="addJs">
+		<array:push var="this.page.js">$return</array:push>
+	</method>
+
+	<!--
+		Sets the page content
+
+		@param {string} return HTML content
+	-->
+	<method name="setContent">
+		<array var="this.page.content">
+			<item>$return</item>
+		</array>
+	</method>
+
+	<!--
+		Adds another section to the page content
+
+		@param {string} return HTML content
+	-->
+	<method name="addContent">
+		<array:push var="this.page.content">$return</array:push>
+	</method>
+
+	<!--
+		Compiles the HTML page
+
+		@return {string}
+	-->
+	<method name="compile">
+		<array var="header" />
+		<is var="this.page.viewport">
+			<array:push var="header"><![CDATA[<meta name="viewport" content="width=$this.viewportWidth">]]></array:push>
+		</is>
+		<is var="this.page.header" type="array">
+			<foreach var="this.page.header" var_value="value">
+				<array:push var="header"><![CDATA[$value]]></array:push>
+			</foreach>
+		</is>
+		<is var="this.page.includeCss">
+			<foreach var="this.page.includeCss" var_value="value">
+				<array:push var="header"><![CDATA[<link rel="stylesheet" href="$value">]]></array:push>
+			</foreach>
+		</is>
+		<is var="this.page.css">
+			<foreach var="this.page.css" var_value="value">
+				<array:push var="header"><![CDATA[<style type="text/css">$value</style>]]></array:push>
+			</foreach>
+		</is>		<is var="this.page.includeJs">
+			<foreach var="this.page.includeJs" var_value="value">
+				<array:push var="header"><![CDATA[<script type="text/javascript" src="$value"></script>]]></array:push>
+			</foreach>
+		</is>		<is var="this.page.js">
+			<foreach var="this.page.js" var_value="value">
+				<array:push var="header"><![CDATA[<script type="text/javascript">$value</script>]]></array:push>
+			</foreach>
+		</is>
+		<array:join var="header" var_result="header_out" delimiter="&n;" />
+
+		<array var="body" />
+		<is var="this.page.content">
+			<foreach var="this.page.content" var_value="value">
+				<array:push var="body">$value</array:push>
+			</foreach>
+		</is>
+		<array:join var="body" var_result="body_out" delimiter="&n;" />
+
+		<set var="return"><![CDATA[<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html> <!--<![endif]-->
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<title>$this.page.title</title>
+		<meta name="description" content="$this.page.description">
+
+$header_out
+	</head>
+	<body>
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+        <![endif]-->
+
+$body_out
+	</body>
+</html>]]></set>
+	</method>
+</class>
+
+</ixml>
