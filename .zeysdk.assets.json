@@ -6,11 +6,15 @@
     },
     "xml": {
       "mimetype": "application/ixml+xml",
-      "name": "XML Tools"
+      "name": "XML-related utility functions"
     },
-    "inline": {
+    "string": {
       "mimetype": "application/ixml+xml",
-      "name": "Inline utility functions"
+      "name": "String-related utility functions"
+    },
+    "transactions": {
+      "mimetype": "application/ixml+xml",
+      "name": "Transaction-related utility functions"
     }
   }
 }
