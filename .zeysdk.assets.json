@@ -8,13 +8,9 @@
       "mimetype": "application/ixml+xml",
       "name": "XML Tools"
     },
-    "transactions": {
+    "inline": {
       "mimetype": "application/ixml+xml",
-      "name": "Transaction-related constants and functions"
-    },
-    "string": {
-      "mimetype": "application/ixml+xml",
-      "name": "String-related functions"
+      "name": "Inline utility functions"
     }
   }
 }
