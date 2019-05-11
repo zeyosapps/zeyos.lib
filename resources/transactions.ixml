@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ixml SYSTEM "https://developers.zeyos.com/schema/ixml.dtd">
+<ixml
+	xmlns="https://developers.zeyos.com/schema/ixml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://developers.zeyos.com/schema/ixml https://developers.zeyos.com/schema/ixml.xsd">
+
+	<!--
+		@var {array} numformats
+		@description Number format list
+	-->
+	<array var="return.numformat">
+		<item>billing_quotationnum</item>
+		<item>billing_ordernum</item>
+		<item>billing_deliverynum</item>
+		<item>billing_invoicenum</item>
+		<item>billing_creditnum</item>
+		<item>procurement_request</item>
+		<item>procurement_ordernum</item>
+		<item>procurement_deliverynum</item>
+		<item>procurement_invoicenum</item>
+		<item>procurement_creditnum</item>
+	</array>
+
+	<array var="return.names">
+		<item>$L(transaction.quote.name)</item>
+		<item>$L(transaction.order.name)</item>
+		<item>$L(transaction.delivery.name)</item>
+		<item>$L(transaction.invoice.name)</item>
+		<item>$L(transaction.credit.name)</item>
+		<item>$L(transaction.srequest.name)</item>
+		<item>$L(transaction.sorder.name)</item>
+		<item>$L(transaction.sdelivery.name)</item>
+		<item>$L(transaction.sinvoice.name)</item>
+		<item>$L(transaction.scredit.name)</item>
+	</array>
+
+	<!--
+		@var {array} status
+		@description Transaction status codes
+	-->
+	<array var="return.status">
+		<item>DRAFT</item>
+		<item>ACTIVE</item>
+		<item>HOLD</item>
+		<item>CANCELLED</item>
+		<item>CLOSED</item>
+		<item>PARTLYORDERED</item>
+		<item>PARTLYORDERED_CANCELLED</item>
+		<item>PARTLYORDERED_CLOSED</item>
+		<item>ORDERED</item>
+		<item>PARTLYDELIVERED</item>
+		<item>PARTLYDELIVERED_CANCELLED</item>
+		<item>PARTLYDELIVERED_CLOSED</item>
+		<item>DELIVERED</item>
+		<item>PARTLYINVOICED</item>
+		<item>PARTLYINVOICED_CANCELLED</item>
+		<item>PARTLYINVOICED_CLOSED</item>
+		<item>INVOICED</item>
+		<item>PARTLYPAID</item>
+		<item>PARTLYPAID_CANCELLED</item>
+		<item>PARTLYPAID_CLOSED</item>
+		<item>PAID</item>
+	</array>
+
+	<!--
+		@function getDefaultAddresses
+		@description Return the default address
+		@param {int} account
+	-->
+	<function var="return.getDefaultAddresses">
+		<db:select var_result="addresses" type="assoc" limit="2">
+			<db:fields>
+				<db:field>contact</db:field>
+				<db:field>type</db:field>
+			</db:fields>
+			<db:table>addresses</db:table>
+			<db:is field="account">$account</db:is>
+			<db:is field="default">1</db:is>
+		</db:select>
+
+		<array var="return" />
+		<foreach var="addresses" var_value="address">
+			<set var="key">shipping</set>
+			<if value1="$address.type" value2="1">
+				<set var="key">billing</set>
+			</if>
+			<db:get entity="contacts" id="$address.contact" var="return[$key]" />
+			<set var="return[$key].recipient">$return[$key].lastname</set>
+			<if value1="$return[$key].firstname" func="!=">
+				<set var="return[$key].recipient">$return[$key].firstname $return[$key].lastname</set>
+			</if>
+		</foreach>
+	</function>
+
+	<!--
+		@macro insertAddress
+		@description Macro for address insertion for new transactions
+	-->
+	<macro var="return.insertAddress">
+		<is var="address.shipping">
+			<db:data field="shippingrecipient">$address.shipping.recipient</db:data>
+			<db:data field="shippingaddress">$address.shipping.address</db:data>
+			<db:data field="shippingpostalcode">$address.shipping.postalcode</db:data>
+			<db:data field="shippingcity">$address.shipping.city</db:data>
+			<db:data field="shippingregion">$address.shipping.region</db:data>
+			<db:data field="shippingcountry">$address.shipping.country</db:data>
+		</is>
+		<is var="address.billing">
+			<db:data field="billingrecipient">$address.billing.recipient</db:data>
+			<db:data field="billingaddress">$address.billing.address</db:data>
+			<db:data field="billingpostalcode">$address.billing.postalcode</db:data>
+			<db:data field="billingcity">$address.billing.city</db:data>
+			<db:data field="billingregion">$address.billing.region</db:data>
+			<db:data field="billingcountry">$address.billing.country</db:data>
+		</is>
+	</macro>
+
+</ixml>
