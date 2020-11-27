@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ixml SYSTEM "https://developers.zeyos.com/schema/ixml.dtd">
+<ixml
+	xmlns="https://developers.zeyos.com/schema/ixml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://developers.zeyos.com/schema/ixml https://developers.zeyos.com/schema/ixml.xsd">
+
+	<function var="deepMerge">
+		<use var="deepMerge"/>
+		<assign var="merged" var_source="array1"/>
+		<foreach var="array2" var_key="key" var_value="value">
+			<set var="isArrMerge"></set>
+			<is type="array" var="value">
+				<is type="array" var="merged[$key]">
+					<set var="isArrMerge">1</set>
+				</is>
+			</is>
+			<if value1="$isArrMerge" value2="1">
+				<call func="deepMerge" var="merged[$key]">
+					<param name="array1" var="merged[$key]"/>
+					<param name="array2" var="value"/>
+				</call>
+				<elseis type="numeric" var="key">
+					<array:valueexists var="merged" var_result="exists">$value</array:valueexists>
+					<if value1="$exists">
+						<assign var="merged[]" var_source="value"/>
+					</if>
+				</elseis>
+				<else>
+					<assign var="merged[$key]" var_source="value"/>
+				</else>
+			</if>
+		</foreach>
+		<assign var="return" var_source="merged"/>
+	</function>
+
+	<!--
+		Deep-merge two arrays
+		@param array1
+		@param array2
+		@see SO/Drupal array_merge_recursive_ex
+	-->
+	<function var="return.deepMerge">
+		<use var="deepMerge"/>
+		<call func="deepMerge" var="return">
+			<param var="array1"/>
+			<param var="array2"/>
+		</call>
+	</function>
+</ixml>
+

@@ -94,6 +94,68 @@
 	</function>
 
 	<!--
+		@param ID
+	-->
+	<function var="return.applyPricelists">
+		<db:get entity="transactions" id="$ID" var="return">
+			<db:field>account</db:field>
+			<db:field>currency</db:field>
+			<db:field>type</db:field>
+			<db:field>netamount</db:field>
+			<db:field>tax</db:field>
+			<db:field>margin</db:field>
+			<db:field>discount</db:field>
+			<db:field>items</db:field>
+		</db:get>
+		<if value1="$return.account">
+			<return/>
+		</if>
+		<if value1="$return.items">
+			<return/>
+		</if>
+		<array var="its"/>
+		<decode:json var="items">$return.items</decode:json>
+		<foreach var="items" var_value="item">
+			<if value1="$item.item" func="!=">
+				<set var="its[$item.item]">$($its[$item.item] + $item.amount)</set>
+			</if>
+		</foreach>
+		<include id="zeyos.lib.getprice" var="prices">
+			<param name="items" var="its"/>
+			<param var="return.account"/>
+			<param var="return.currency"/>
+			<param var="return.type"/>
+		</include>
+
+		<array var="total"/>
+		<foreach var="items" var_value="item">
+			<foreach var="prices" var_key="id" var_value="p">
+				<if value1="$item.item" value2="$id">
+					<set var="item.sellingprice">$p[0]</set>
+					<set var="item.rebate">$p[1]</set>
+					<set var="item.discount">$p[2]</set>
+				</if>
+			</foreach>
+			<if value1="$item.ext_units" func="!=">
+				<set var="item.sellingprice">$($item.ext_units * $item.sellingprice)</set>
+			</if>
+			<set var="price">$($item.amount * ($item.sellingprice - $item.rebate) * (1 - $item.discount / 100) * (1 - $item.discount2 / 100))</set>
+			<set var="total.netamount">$($total.netamount + $price)</set>
+			<set var="total.tax">$($total.tax + $price * $item.taxrate / 100)</set>
+			<set var="total.margin">$($total.margin + $price - $item.amount * $item.purchaseprice)</set>
+			<set var="total.discount">$($total.discount + $item.amount * $item.sellingprice - $price)</set>
+		</foreach>
+		
+		<transitems var="items"/>
+
+		<set var="return.netamount">$total.netamount</set>
+		<set var="return.tax">$total.tax</set>
+		<set var="return.margin">$total.margin</set>
+		<set var="return.discount">$total.discount</set>
+		<encode:json var="items" var_result="return.items"/>
+	</function>
+
+	<!--
 		@macro insertAddress
 		@description Macro for address insertion for new transactions
 	-->

@@ -24,7 +24,7 @@
 	</function>
 
 	<!--
-		@function formatNum
+		@function formatTime
 		@description Formats time in Minutes into an hours (H:M)
 	-->
 	<function var="return.formatTime">
@@ -72,4 +72,100 @@
 		-->
 	</function>
 
-	</ixml>
+	<function var="return.convertGroupNumberToText">
+			<set var="result"></set>
+			<set var="groupLevel">$($groupLevel)</set>
+			<if value1="$groupLevel" value2="0">
+					<set var="number">$return</set>
+			</if>
+			<if value1="$($number)" value2="0">
+					<return/>
+			</if>
+
+			<set var="groupNumber">$($number % 1000)</set>
+			<if value1="$groupNumber" value2="1">
+					<set var="result">$LANGUAGE.labels.numerals.numerals[1]$$LANGUAGE.labels.numerals.groups[$groupLevel][0]</set>
+					<elseif value1="$groupNumber" func="&gt;" value2="1">
+							<set var="result"></set>
+							<math:floor var="firstDigit">$($groupNumber / 100)</math:floor>
+							<if value1="$firstDigit" func="&gt;" value2="0">
+									<concat var="result">$LANGUAGE.labels.numerals.numerals[$firstDigit]$$LANGUAGE.labels.numerals.hundred</concat>
+							</if>
+							<set var="lastDigits">$($groupNumber % 100)</set>
+							<math:floor var="secondDigit">$($lastDigits / 10)</math:floor>
+							<set var="thirdDigit">$($lastDigits % 10)</set>
+
+							<if value1="$lastDigits" value2="1">
+									<concat var="result">$LANGUAGE.labels.numerals.numerals[1]$s</concat>
+									<elseif value1="$lastDigits" func="&lt;" value2="20">
+											<if value1="$lastDigits" func="&gt;" value2="1">
+													<concat var="result">$LANGUAGE.labels.numerals.numerals[$lastDigits]</concat>
+											</if>
+									</elseif>
+									<elseif value1="$lastDigits" func="&gt;=" value2="20">
+											<if value1="$thirdDigit" func="&gt;" value2="0">
+													<concat var="result">$LANGUAGE.labels.numerals.numerals[$thirdDigit]$$LANGUAGE.labels.numerals.and</concat>
+											</if>
+											<concat var="result">$LANGUAGE.labels.numerals.tenners[$secondDigit]</concat>
+									</elseif>
+							</if>
+
+							<concat var="result">$LANGUAGE.labels.numerals.groups[$groupLevel][1]</concat>
+					</elseif>
+			</if>
+
+			<math:inc var="groupLevel"/>
+			<call func="this.convertGroupNumberToText" var="return">
+					<param name="number"><math:floor>$($number / 1000)</math:floor></param>
+					<param var="groupLevel"/>
+			</call>
+			<concat var="return">$result</concat>
+	</function>
+
+
+	<function var="return.convertNumberToText">
+		<call func="LANGUAGE.section" var="LANGUAGE.labels.numerals">
+			<param name="section">numerals</param>
+		</call>
+
+		<replace var="return" pattern="/(\d+)[\.,]\d+/" replacement="$$1">$return</replace>
+
+		<if value1="$($return)" value2="0">
+			<set var="return">$LANGUAGE.labels.numerals.numerals[0]</set>
+			<elseif value1="$return" func="&lt;" value2="0">
+				<set var="return">$LANGUAGE.labels.numerals.minus $LIB.convertGroupNumberToText($(-1 * $return))</set>
+			</elseif>
+			<else>
+				<set var="return">$this.convertGroupNumberToText($return)</set>
+			</else>
+		</if>
+	</function>
+
+	<!--
+		@param text
+	-->
+	<function var="return.parseParams">
+		<array var="return">
+			<array key="params" />
+			<item key="text"></item>
+		</array>
+		<set var="a">\"</set>
+		<split pattern="/\r\n|\n|\r/u" var="lines">$text</split>
+		<foreach var="lines" var_value="line">
+			<match var_matches="match" pattern="/^@([a-z]+):([a-z_]+)\s+$a$([^$a$]+)$a$(\s+$a$([^$a$]+)$a)?$/" var="count">$line</match>
+			<if value1="$count" value2="1">
+				<array var="return.params[]">
+					<item key="type">$match[0][1]</item>
+					<item key="id">$match[0][2]</item>
+					<item key="label">$match[0][3]</item>
+					<item key="default">$match[0][5]</item>
+				</array>
+				<next />
+			</if>
+			<concat var="return.text">$line&n;</concat>
+		</foreach>
+
+		<trim var="return.text">$return.text</trim>
+	</function>
+
+</ixml>

@@ -2,19 +2,49 @@
   "resources": {
     "html": {
       "mimetype": "application/ixml+xml",
-      "name": "HTML Boilerplate"
+      "name": "HTML Boilerplate",
+      "public": 0
     },
     "xml": {
       "mimetype": "application/ixml+xml",
-      "name": "XML-related utility functions"
+      "name": "XML-related utility functions",
+      "public": 0
     },
     "string": {
       "mimetype": "application/ixml+xml",
-      "name": "String-related utility functions"
+      "name": "String-related utility functions",
+      "public": 0
     },
     "transactions": {
       "mimetype": "application/ixml+xml",
-      "name": "Transaction-related utility functions"
+      "name": "Transaction-related utility functions",
+      "public": 0
+    },
+    "array": {
+      "name": "Array-related utility functions",
+      "mimetype": "application/ixml+xml",
+      "public": 0
+    },
+    "getprice": {
+      "name": "Lib Get Price",
+      "mimetype": "text/x-zymba",
+      "public": 0
+    },
+    "excel": {
+      "mimetype": "application/ixml+xml",
+      "name": "Excel Export and Import",
+      "public": 0
+    }
+  },
+  "services": {
+    "xml-sample": {
+      "mimetype": "application/ixml+xml",
+      "name": "xml-sample",
+      "type": null,
+      "schedule": 0,
+      "interval": 1,
+      "entity": "",
+      "url": ""
     }
   }
 }

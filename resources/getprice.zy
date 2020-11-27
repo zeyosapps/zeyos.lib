@@ -1,0 +1,41 @@
+include 'zymba:date,sql';
+
+$currency = @currency;
+$account = @account;
+$items = @items;
+$isBilling = @type < 5;
+
+/*
+	$items = [
+		<ID>: <amount>
+	];
+*/
+
+$now = @Date.now();
+
+$db = @ZeyOS.selectDatabase(@SQL.Connection);
+
+$sql = `SELECT `
+	. `COALESCE("p2i"."price", ?0), "p2i"."rebate", "p2i"."discount", ((COALESCE("p2i"."price", ?0) - "p2i"."rebate") * (1 - "p2i"."discount" / 100)) AS "effectiveprice" `
+	. `FROM "prices" "p2i" INNER JOIN "pricelists" "pri" ON "pri"."ID" = "p2i"."pricelist" `
+	. `WHERE "pri"."activity" = 0 `
+	. `AND "p2i"."item" = ?1 `
+	. `AND "p2i"."minamount" <= ?2 `
+	. `AND "pri"."type" = ?3 `
+	. `AND ("pri"."datefrom" IS NULL OR "pri"."datefrom" <= ?4) AND ("pri"."dateto" IS NULL OR "pri"."dateto" > ?4) `
+	. `AND "pri"."currency" = ?5 `
+	. `AND ("pri"."applytoall" <> 0 OR "pri"."ID" IN (SELECT "pricelist" FROM "pricelists2accounts" WHERE "account" = ?6)) `
+	. `ORDER BY "effectiveprice" `;
+
+$prices = [];
+
+for ($items as $id: $amount) {
+	$price = (float) (new @ZeyOS.Object('items', $id).getField($isBilling ? 'sellingprice' : 'purchaseprice'));
+
+	$min = $db.fetchOne(@SQL.prepare($sql, $price, $id, $amount, $isBilling ? 0 : 2, $now, $currency, $account).'ASC LIMIT 1', true);
+	$max = $db.fetchOne(@SQL.prepare($sql, $price, $id, $amount, $isBilling ? 1 : 3, $now, $currency, $account).'DESC LIMIT 1', true);
+
+	$prices[$id] = $min && $max ? ($min[3] < $max[3] ? $min : $max) : $min ?? $max ?? [$price, 0, 0];
+}
+
+return $prices;

@@ -5,91 +5,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://developers.zeyos.com/schema/ixml https://developers.zeyos.com/schema/ixml.xsd">
 
-<array var="data">
-	<array key="CstmrCdtTrfInitn">
-		<array key="GrpHdr">
-			<item key="MsgId">Lohn 11-2018</item>
-			<item key="CreDtTm">2018-11-28T09:30:47.000Z</item>
-			<item key="NbOfTxs"></item>
-			<array key="InitgPty">
-				<item key="Nm">BIT Mosaik GmbH</item>
-			</array>
-		</array>
-		<array key="PmtInf">
-			<item key="PmtInfId">Payment-Information-ID-4721</item>
-			<item key="PmtMtd">TRF</item>
-			<item key="BtchBookg">false</item>
-			<item key="NbOfTxs">1</item>
-			<item key="CtrlSum">1427</item>
-			<array key="PmtTpInf">
-				<array key="SvcLvl">
-					<item key="Cd">SEPA</item>
-				</array>
-			</array>
-			<item key="ReqdExctnDt">2018-11-28</item>
-			<array key="Dbtr">
-				<item key="Nm">BIT Mosaik GmbH</item>
-			</array>
-			<array key="DbtrAcct">
-				<array key="Id">
-					<item key="IBAN">DE61760520800042364588</item>
-				</array>
-			</array>
-			<array key="DbtrAgt">
-				<array key="FinInstnId">
-					<item key="BIC">BYLADEM1NMA</item>
-				</array>
-			</array>
-			<array key="DbtrAcct">
-				<array key="Id">
-					<item key="IBAN">DE61760520800042364588</item>
-				</array>
-			</array>
-			<array key="DbtrAgt">
-				<array key="FinInstnId">
-					<item key="BIC">BYLADEM1NMA</item>
-				</array>
-			</array>
-			<item key="ChrgBr">SLEV</item>
-			<array key="CdtTrfTxInf">
-				<array key="PmtId">
-					<item key="EndToEndId">Lohn Peter Pahn</item>
-				</array>
-				<array key="Amt">
-					<array key="InstdAmt">
-						<item key="@value">1427</item>
-						<array key="@attr">
-							<item key="Ccy">EUR</item>
-						</array>
-					</array>
-				</array>
-				<array key="CdtrAgt">
-					<array key="FinInstnId">
-						<item key="BIC">SPUEDE2UXXX</item>
-					</array>
-				</array>
-				<array key="Cdtr">
-					<item key="Nm">Peter Pahn</item>
-				</array>
-				<array key="CdtrAcct">
-					<array key="Id">
-						<item key="IBAN">DE21500500009876543210</item>
-					</array>
-				</array>
-				<array key="RmtInf">
-					<item key="Ustrd">blub blub</item>
-				</array>
-			</array>
-		</array>
-	</array>
-</array>
-
 <!--
 	Provide intention
 
 	@inline
 -->
-<global var="tab" />
 <function var="tab">
 	<set var="to">$($return)</set>
 	<set var="return"></set>
@@ -103,12 +23,12 @@
 	@param node
 	@param level
 -->
-<global var="convert" />
-<function var="convert">
+<function var="return">
+	<use var="tab" />
 	<set var="return"></set>
 	<foreach var="node" var_key="tag" var_value="value">
 		<is var="value" type="array">
-      <!-- Check if it's a node with attributes -->
+      		<!-- Check if it's a node with attributes -->
 			<foreach var="value" var_key="key">
 				<if value1="$key" value2="@" func="^">
 					<concat var="return">$tab($level)&lt;$tag</concat>
@@ -161,19 +81,5 @@
 		<concat var="return">&lt;/$tag&gt;&n;</concat>
 	</foreach>
 </function>
-
-<set var="xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.002.03" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:pain.001.002.03 pain.001.002.03.xsd">
-]]></set>
-<concat var="xml">
-	<call func="convert">
-		<param name="node" var="data" />
-		<param name="level">0</param>
-	</call>
-</concat>
-<concat var="xml">&lt;/Document&gt;</concat>
-
-<header>Content-type: text/xml</header>
-<output>$xml</output>
 
 </ixml>

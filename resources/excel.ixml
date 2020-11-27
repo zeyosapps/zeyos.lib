@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ixml SYSTEM "https://developers.zeyos.com/schema/ixml.dtd">
+<ixml
+	xmlns="https://developers.zeyos.com/schema/ixml"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="https://developers.zeyos.com/schema/ixml https://developers.zeyos.com/schema/ixml.xsd">
+
+	<!--
+		@param name*
+		@param title
+		@param cols*
+		@param rows
+	-->
+	<class var="return.Worksheet">
+		<property name="formatDate">dd.mm.yyyy</property>
+		<property name="formatCurrency">_-* #.##0,00 €_-;-* #.##0,00 €_-;_-* "-"?? €_-;_-@_-</property>
+
+		<constructor>
+			<array var="this.cols" />
+			<array var="this.rows" />
+
+			<if value1="$name">
+				<error>No name specified</error>
+			</if>
+
+			<set var="this.name">$name</set>
+			<set var="this.title">$title</set>
+
+			<foreach var="cols" var_value="col">
+				<call func="this.addCol" var_params="col" />
+			</foreach>
+
+			<foreach var="rows" var_value="row">
+				<call func="this.addRow">
+					<param var="row" />
+				</call>
+			</foreach>
+		</constructor>
+
+		<!--
+			@param id*
+			@param label*
+			@param type (money, double, int, date, text default: text)
+			@param width
+			@param style
+		-->
+		<method name="addCol">
+			<if value1="$($width)" value2="0">
+				<length var="len">$label</length>
+				<math:ceil var="width">$($len * 1.3)</math:ceil>
+			</if>
+
+			<switch value="$type">
+				<case value="money">
+					<set var="type">numeric</set>
+					<set var="format">$this.formatCurrency</set>
+				</case>
+				<case value="double">
+					<set var="type">numeric</set>
+					<set var="format">#,##0.00</set>
+				</case>
+				<case value="int">
+					<set var="type">numeric</set>
+					<set var="format">#0</set>
+				</case>
+				<case value="num">
+					<set var="type">numeric</set>
+				</case>
+				<case value="date">
+					<set var="type">date</set>
+					<if value1="$format">
+						<set var="format">$this.formatDate</set>
+					</if>
+				</case>
+				<case value="numeric" />
+				<default>
+					<set var="type">text</set>
+				</default>
+			</switch>
+
+			<array var="this.cols[]">
+				<item key="id">
+					<replace value="*">$id</replace>
+				</item>
+				<item key="label">$label</item>
+				<item key="width">$width</item>
+				<item key="type">$type</item>
+				<item key="format">$format</item>
+				<item key="style" var="style" />
+			</array>
+		</method>
+
+		<method name="addRow">
+			<assign var="this.rows[]" var_source="row" />
+		</method>
+
+		<method name="isNumeric">
+			<array:first var="this.rows" var_value="row" />
+			<array:first var="row" var_key="key" />
+			<is var="key" type="numeric">
+				<set var="return">1</set>
+			</is>
+		</method>
+	</class>
+
+	<class var="return.Workbook">
+		<!--
+			@param title
+		-->
+		<constructor>
+			<set var="this.title">$title</set>
+		</constructor>
+
+		<!--
+			@param format
+			@param title
+		-->
+		<method name="compile">
+			<excel:workbook title="$this.title" subject="$this.subject" format="$this.format">
+				<excel:removesheet /><!-- workaround to set title of first page -->
+			
+				<set var="index">0</set>
+				<foreach var="this.sheets" var_value="sheet">
+					<set var="y">0</set>
+
+					<!-- Add the worksheet -->
+					<excel:addsheet>$sheet.name</excel:addsheet>
+					<excel:setpos col="0" row="$y" sheet="$index" />
+
+					<!-- Format the column width -->
+					<foreach var="sheet.cols" var_value="col">
+						<array var="styleCol">
+							<item key="width">$col.width</item>
+							<item key="width">$col.width</item>
+						</array>
+						<excel:style var="styleCol" />
+						<excel:next />
+					</foreach>
+
+					<excel:setpos col="0" row="$y" sheet="$index" />
+					<set var="filterStart">1</set>
+
+					<!-- Add the headline -->
+					<if value1="$sheet.title" func="!=">
+						<array var="styleTitle">
+							<array key="font">
+								<item key="bold">1</item>
+								<item key="size">14</item>
+							</array>
+						</array>
+
+						<excel:set type="text">$sheet.title</excel:set>
+						<excel:style var="styleTitle">A1:A1</excel:style>
+
+						<excel:next offset_row="2" offset_col="0" />
+						<math:inc var="y">2</math:inc>
+						<set var="filterStart">3</set>
+					</if>
+			
+					<!-- Add some intro text -->
+			
+					<!-- Add the column headers -->
+					<foreach var="sheet.cols" var_value="col">
+						<excel:set type="text">$col.label</excel:set>
+						<excel:next />
+					</foreach>
+			
+					<!-- Change the headline style -->
+					<array var="styleHeadline">
+						<array key="font">
+							<item key="bold">1</item>
+						</array>
+						<array key="borders">
+							<array key="bottom">
+								<item key="borderStyle">thick</item>
+								<array key="color">
+									<item key="rgb">000000</item>
+								</array>
+							</array>
+						</array>
+					</array>
+
+					<array:length var="sheet.cols" var_result="colLen" />
+					<excel:style var="styleHeadline">A$($y+1):$this.convertCol($($colLen - 1))$($y+1)</excel:style>
+			
+					<!-- Freeze the table here -->
+					<math:inc var="y" />
+					<excel:setpos col="0" row="$y" sheet="$index" />
+					<set var="styleFreeze.freeze">1</set>
+					<excel:style var="styleFreeze" />
+			
+					<set var="numeric">$sheet.isNumeric()</set>
+
+					<foreach var="sheet.rows" var_value="row">
+						<excel:setpos col="0" row="$y" sheet="$index" />
+
+						<set var="c">0</set>
+						<foreach var="sheet.cols" var_key="colKey" var_value="col">
+							<math:inc var="c" />
+
+							<if value1="$numeric" value2="1">
+								<assign var="cell" var_source="row[$colKey]" />
+							<elseif value1="$col.id" func="!=">
+								<assign var="cell" var_source="row[$col.id]" />
+							</elseif>
+							<else>
+								<!-- Skip cell -->
+								<excel:next />
+								<next />
+							</else>
+							</if>
+							
+							<assign var="type" var_source="col.type" />
+							<assign var="format" var_source="col.format" />
+							<assign var="style" var_source="col.style" />
+							
+							<is var="cell" type="array">
+								<if value1="$cell.type">
+									<set var="ttype">$cell.type</set>
+								</if>
+								<if value1="$cell.format">
+									<set var="format">$cell.format</set>
+								</if>
+								<is var="cell.style" type="array">
+									<assign var="style" var_source="cell.style" />
+								</is>
+
+								<set var="value">$cell.value</set>
+							<else>
+								<set var="value">$cell</set>
+							</else>
+							</is>
+
+							<excel:set type="$type" format="$format">$value</excel:set>
+							<is var="style" type="array">
+								<excel:style var="style">$this.convertCol($($c - 1))$($y+1)</excel:style>
+							</is>
+							
+							<excel:next />
+						</foreach>
+						<math:inc var="y" />
+					</foreach>
+
+					<excel:next offset_col="-1" />
+					<excel:autofilter>A$($filterStart):$this.convertCol($($colLen - 1))$($y)</excel:autofilter>
+					<excel:setpos col="0" row="0" sheet="$index" />
+					<math:inc var="index" />
+				</foreach>
+			
+				<excel:setpos col="0" row="0" sheet="0" />
+			
+				<excel:create var="return" />
+			</excel:workbook>
+		</method>
+
+		<!-- Convert number into excel col letter -->
+		<method name="convertCol">
+			<!--
+				https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec&unicodeinhtml=dec
+			-->
+			<set var="return">$($return + 1)</set> <!-- Start at 1! -->
+			<set var="a">64</set> <!-- A starts at 64 -->
+			<set var="len">26</set> <!-- Alphabet is 26 characters long -->
+	
+			<math:ceil var="page">$($return / $len)</math:ceil>
+			<set var="page">$($page - 1)</set>
+			<char var="return">$($return - $page * $len + $a)</char> 
+			<if value1="$page" value2="0" func="&gt;">
+				<char var="page">$($page + $a)</char>
+				<set var="return">$page$$return</set>
+			</if>
+		</method>
+	
+		<method name="formatDateFile">
+			<date:format format="dmy" var="return">$return</date:format>
+		</method>
+
+		<method name="formatDate">
+			<date:format format="d.m.Y" var="return">$return</date:format>
+		</method>
+
+		<method name="output">
+			<header>Content-type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</header>
+			<if value1="$filename" func="!=">
+				<header>Content-Disposition: attachment;filename="$filename$"</header>
+			</if>
+			<header>Cache-Control: max-age=0</header>
+			<output>
+				<call func="this.compile" />
+			</output>
+		</method>
+	</class>
+
+	<!--
+		@param table
+		@param orderby
+		@param fields [field1, *extdata1, field2]
+		@param filter [
+			[field, func, value]
+		]
+
+	-->
+	<function var="return.dynamicQuery">
+		<if value1="$orderby">
+			<set var="orderby">name</set>
+		</if>
+
+		<function var="getField">
+			<use var="ext" />
+			<array:keyexists var="ext" var_result="check">$return</array:keyexists>
+			<is var="check" type="true">
+				<set var="return">x$ext[$return]$.value</set>
+			<else>
+				<set var="return">t.$return</set>
+			</else>
+			</is>
+		</function>
+
+		<!--
+			@param field
+			@param func
+			@param value
+		-->
+		<function var="dynamicFilter">
+			<use var="getField" />
+			<use var="dynamicFilter" />
+
+			<tolower var="func">$func</tolower>
+			<switch value="$func">
+				<case value="or">
+					<db:or>
+						<foreach var="value" var_value="filter">
+							<call func="dynamicFilter" var_params="filter" />
+						</foreach>
+					</db:or>
+				</case>
+				<case value="and">
+					<db:and>
+						<foreach var="value" var_value="filter">
+							<call func="dynamicFilter" var_params="filter" />
+						</foreach>
+					</db:and>
+				</case>
+				<case value="null">
+					<db:isnull field="$getField($field)" />
+				</case>
+				<case value="notnull">
+					<db:isnotnull field="$getField($field)" />
+				</case>
+				<default>
+					<if value1="$func">
+						<set var="func">=</set>
+					</if>
+					<db:is field="$getField($field)" func="$func">$value</db:is>
+				</default>
+			</switch>
+		</function>
+
+		<array var="cols" />
+		<set var="x">0</set>
+
+		<db:select var_result="return" type="assoc">
+			<db:fields>
+				<if value1="$showId" value2="0" func="!=">
+					<db:field>t.ID</db:field>
+				</if>
+				<foreach var="fields" var_value="field">
+					<if value1="$field" value2="*" func="^">
+						<math:inc var="x" />
+						<replace var="id" value="*">$field</replace>
+						<set var="ext[$id]">$x</set>
+
+						<db:field alias="$id">x$x$.value</db:field>
+					<else>
+						<db:field>t.$field</db:field>
+					</else>
+					</if>
+				</foreach>
+
+				<!-- Check if the filter field is an extdata field that does not exist -->
+				<foreach var="filters" var_value="filter">
+					<if value1="$filter.field" value2="*" func="^">
+						<replace var="filter.field" value="*">$filter.field</replace>
+						<array:keyexists var="ext" var_result="check">$filter.field</array:keyexists>
+						<is var="check" type="false">
+							<math:inc var="x" />
+							<set var="ext[$filter.field]">$x</set>
+						</is>
+					</if>
+				</foreach>
+			</db:fields>
+			<db:table alias="t">$table</db:table>
+			<db:join>
+				<foreach var="ext" var_key="name" var_value="x">
+					<db:leftextdata alias="x$x$" entity="$table" name="$name" field="t.ID" />
+				</foreach>
+			</db:join>
+			<foreach var="filters" var_value="filter">
+				<call func="dynamicFilter" var_params="filter" />
+			</foreach>
+			<db:orderby>
+				<db:orderfield>$getField($orderby)</db:orderfield>
+			</db:orderby>
+		</db:select>
+	</function>
+
+</ixml>
+
